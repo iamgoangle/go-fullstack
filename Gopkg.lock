@@ -13,8 +13,8 @@
     ".",
     "middleware"
   ]
-  revision = "27b5253bfd53caad64fb5d2a49ec724ff5558451"
-  version = "3.3.0"
+  revision = "a5d81b8d4a627f3f49dcb3164ef2bb5239682227"
+  version = "3.3.4"
 
 [[projects]]
   name = "github.com/labstack/gommon"
@@ -40,6 +40,12 @@
   version = "v0.0.3"
 
 [[projects]]
+  name = "github.com/satori/go.uuid"
+  packages = ["."]
+  revision = "f58768cc1a7a7e77a3bd49e98cdd21419399b6a3"
+  version = "v1.2.0"
+
+[[projects]]
   branch = "master"
   name = "github.com/valyala/bytebufferpool"
   packages = ["."]
@@ -58,17 +64,29 @@
     "acme",
     "acme/autocert"
   ]
-  revision = "182114d582623c1caa54f73de9c7224e23a48487"
+  revision = "374053ea96cb300f8671b8d3b07edeeb06e203b4"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix"]
-  revision = "c28acc882ebcbfbe8ce9f0f14b9ac26ee138dd51"
+  revision = "01acb38716e021ed1fc03a602bdb5838e1358c5e"
+
+[[projects]]
+  branch = "v2"
+  name = "gopkg.in/mgo.v2"
+  packages = [
+    ".",
+    "bson",
+    "internal/json",
+    "internal/sasl",
+    "internal/scram"
+  ]
+  revision = "3f83fa5005286a7fe593b055f0d7771a7dce4655"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "591d88f29e41d841fad1351c4474fbf0d6cc8286dc6ca99d152ebcc90499fd56"
+  inputs-digest = "83973ff4d2f7231f2bfe2577e1ec95a31928205e3145e87abca5ef997bbddb92"
   solver-name = "gps-cdcl"
   solver-version = 1

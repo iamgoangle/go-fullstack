@@ -81,8 +81,7 @@ type (
 		Binder           Binder
 		Validator        Validator
 		Renderer         Renderer
-		// Mutex            sync.RWMutex
-		Logger Logger
+		Logger           Logger
 	}
 
 	// Route contains a handler and information for matching against requests.
@@ -129,15 +128,16 @@ type (
 
 // HTTP methods
 const (
-	CONNECT = "CONNECT"
-	DELETE  = "DELETE"
-	GET     = "GET"
-	HEAD    = "HEAD"
-	OPTIONS = "OPTIONS"
-	PATCH   = "PATCH"
-	POST    = "POST"
-	PUT     = "PUT"
-	TRACE   = "TRACE"
+	CONNECT  = "CONNECT"
+	DELETE   = "DELETE"
+	GET      = "GET"
+	HEAD     = "HEAD"
+	OPTIONS  = "OPTIONS"
+	PATCH    = "PATCH"
+	POST     = "POST"
+	PROPFIND = "PROPFIND"
+	PUT      = "PUT"
+	TRACE    = "TRACE"
 )
 
 // MIME types
@@ -239,6 +239,7 @@ var (
 		OPTIONS,
 		PATCH,
 		POST,
+		PROPFIND,
 		PUT,
 		TRACE,
 	}
@@ -552,39 +553,48 @@ func (e *Echo) ReleaseContext(c Context) {
 
 // ServeHTTP implements `http.Handler` interface, which serves HTTP requests.
 func (e *Echo) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// Acquire lock
-	// e.Mutex.RLock()
-	// defer e.Mutex.RUnlock()
-
 	// Acquire context
 	c := e.pool.Get().(*context)
-	defer e.pool.Put(c)
 	c.Reset(r, w)
 
-	// Middleware
-	h := func(c Context) error {
-		method := r.Method
-		rpath := r.URL.RawPath // Raw path
-		if rpath == "" {
-			rpath = r.URL.Path
+	m := r.Method
+	h := NotFoundHandler
+
+	if e.premiddleware == nil {
+		path := r.URL.RawPath
+		if path == "" {
+			path = r.URL.Path
 		}
-		e.router.Find(method, rpath, c)
-		h := c.Handler()
+		e.router.Find(m, getPath(r), c)
+		h = c.Handler()
 		for i := len(e.middleware) - 1; i >= 0; i-- {
 			h = e.middleware[i](h)
 		}
-		return h(c)
-	}
-
-	// Premiddleware
-	for i := len(e.premiddleware) - 1; i >= 0; i-- {
-		h = e.premiddleware[i](h)
+	} else {
+		h = func(c Context) error {
+			path := r.URL.RawPath
+			if path == "" {
+				path = r.URL.Path
+			}
+			e.router.Find(m, getPath(r), c)
+			h := c.Handler()
+			for i := len(e.middleware) - 1; i >= 0; i-- {
+				h = e.middleware[i](h)
+			}
+			return h(c)
+		}
+		for i := len(e.premiddleware) - 1; i >= 0; i-- {
+			h = e.premiddleware[i](h)
+		}
 	}
 
 	// Execute chain
 	if err := h(c); err != nil {
 		e.HTTPErrorHandler(err, c)
 	}
+
+	// Release context
+	e.pool.Put(c)
 }
 
 // Start starts an HTTP server.
@@ -701,6 +711,14 @@ func WrapMiddleware(m func(http.Handler) http.Handler) MiddlewareFunc {
 			return
 		}
 	}
+}
+
+func getPath(r *http.Request) string {
+	path := r.URL.RawPath
+	if path == "" {
+		path = r.URL.Path
+	}
+	return path
 }
 
 func handlerName(h HandlerFunc) string {
